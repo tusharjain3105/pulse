@@ -1,0 +1,22 @@
+{
+	"name": "pulse-3",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"start": "NODE_ENV=development bun --bun --hot index.ts",
+		"dev": "NODE_ENV=development bun --bun --hot index.ts"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.3",
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"esrap": "^2.1.2",
+		"oxc-parser": "^0.96.0",
+		"oxc-transform": "^0.96.0"
+	}
+}

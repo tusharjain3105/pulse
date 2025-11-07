@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Playground</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', 'Fira Mono', 'Consolas', Monaco, monospace, system-ui, sans-serif;
+            background: #161a1d;
+            color: #eaecef;
+        }
+        body {
+            min-height: 100vh;
+        }
+        .grid {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            background: #181c21;
+        }
+        .panel {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #23272e;
+            margin: 2vw 1vw 2vw 1vw;
+            border-radius: 14px;
+            box-shadow: 0 4px 32px 0 #17193d38;
+            overflow: hidden;
+        }
+        .panel input,
+        .panel textarea {
+            background: transparent;
+        }
+        textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            font-family: Fira Mono, Consolas, 'JetBrains Mono', monospace;
+            font-size: 1.1em;
+            background: transparent;
+            color: #fafbff;
+            box-sizing: border-box;
+            outline: none;
+            padding: 2.9em 1em 1em 1.4em;
+            line-height: 1.6;
+        }
+        .panel-label {
+            position: absolute;
+            top: 0;
+            left: 0.5em;
+            padding: .7em 1.5em .7em 1.4em;
+            font-size: 1.08em;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            color: #5dd2fe;
+            background: linear-gradient(90deg, #25223b 80%, #23272e00);
+            border-radius: 14px 14px 0 0;
+            z-index: 2;
+            box-shadow: 0 1px 4px 0 #19193344;
+        }
+        .divider {
+            position: absolute;
+            left: 50%;
+            top: 2vw;
+            bottom: 2vw;
+            width: 7px;
+            border-radius: 6px;
+            background: linear-gradient(180deg, #5dd2fe 0 60%, #7555fa 80%);
+            box-shadow: 0 0 8px 2px #1c112933;
+            z-index: 1;
+        }
+        button#convertBtn {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 3;
+            padding: 0.5em 1em;
+            font-size: 1em;
+            background: linear-gradient(90deg, #5dd2fe 10%, #8b73fe 60%);
+            color: white;
+            border: none;
+            border-radius: 2.6em;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 8px 24px 0 #514d8459;
+            transition: filter .2s, box-shadow .2s, background .2s;
+            outline: none;
+        }
+        button#convertBtn:hover, button#convertBtn:focus {
+            filter: brightness(1.09);
+            box-shadow: 0 12px 28px 0 #6351ed89;
+        }
+        .error {
+            background: #ffd6d6ec;
+            color: #a20;
+            padding: .7em 1.5em;
+            position: absolute;
+            left: 50%;
+            top: calc(62% + 52px);
+            transform: translate(-50%, 0);
+            border-radius: 1em;
+            font-size: 1.04em;
+            z-index: 10;
+            min-width: 22vw;
+            max-width: 80vw;
+            border: 1px solid #fdc7c7b8;
+            box-shadow: 0 8px 16px #e6878724;
+        }
+        @media (max-width: 960px) {
+            .grid { flex-direction: column; }
+            .panel { margin: 1vw 3vw; }
+            .divider { display: none; }
+            button#convertBtn { top: unset; bottom: 18px; left: 49%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid">
+        <div class="panel" style="margin-right: 0.2vw;">
+            <div class="panel-label">Input TSX/JSX</div>
+            <textarea id="input" spellcheck="false">// Write your TSX here
+export function Counter() {
+  const count = state(0);
+  return &lt;button onClick={() =&gt; count++}&gt;{count.value}&lt;/button&gt;
+}</textarea>
+        </div>
+        <div class="divider"></div>
+        <div class="panel" style="margin-left: 0.2vw;">
+            <div class="panel-label">Transformed Output</div>
+            <textarea id="output" readonly spellcheck="false"></textarea>
+        </div>
+        <button id="convertBtn">Convert</button>
+        <div id="error" class="error" style="display:none"></div>
+    </div>
+    <script type="module" src="index.ts"></script>
+</body>
+</html>
