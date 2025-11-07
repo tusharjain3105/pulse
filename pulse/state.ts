@@ -73,20 +73,21 @@ export const scheduler = new Scheduler();
 
 // Common Types
 type VoidFunction = () => void;
+type Immutable<T> = T extends object ? Readonly<T> : T;
 
 // Symbols for identifications
-const SYM_STATE = Symbol("state");
+const SYM_REACTIVE_STATE = Symbol();
+const SYM_REACTIVE_FUNCTION = Symbol();
 
 // State management
-
 interface State<T = unknown> {
-	value: T;
+	value: T extends object ? Readonly<T> : T;
 	peek(): T;
 	subscribe(
 		cb: (newValue: T, oldValue: T | undefined) => void,
 		opts?: { key?: string },
 	): VoidFunction;
-	[SYM_STATE]: true;
+	[SYM_REACTIVE_STATE]: true;
 }
 
 type StateSubscriber<T = unknown> = Parameters<State<T>["subscribe"]>[0];
@@ -95,7 +96,7 @@ export const state = <T = unknown>(initialValue: T): State<T> => {
 	const subscribers = new Set<StateSubscriber<T>>();
 	const stateSubscriptionMap = new Map<string, StateSubscriber>();
 
-	let value = initialValue;
+	let value = initialValue as Immutable<T>;
 	let scheduled = false;
 	let oldVal: T | undefined;
 
@@ -107,7 +108,7 @@ export const state = <T = unknown>(initialValue: T): State<T> => {
 			if (!scheduled) {
 				oldVal = value;
 			}
-			value = newValue;
+			value = newValue as Immutable<T>;
 
 			if (!scheduled) {
 				scheduled = true;
@@ -143,7 +144,7 @@ export const state = <T = unknown>(initialValue: T): State<T> => {
 			subscribers.add(newCb);
 			return () => subscribers.delete(newCb);
 		},
-		[SYM_STATE]: true,
+		[SYM_REACTIVE_STATE]: true,
 	};
 };
 
@@ -160,14 +161,16 @@ export const computed = <T>(
 	const computedSubscriptionMap = new Map<string, StateSubscriber>();
 	const subscribers = new Set<StateSubscriber<T>>();
 	let result: T | undefined;
-	let oldVal: T | undefined;
+	let oldValue: T | undefined;
 
 	const subscribe = () => {
-		oldVal = result;
+		oldValue = result;
 		result = fn();
-		subscribers.forEach((subscriber) => {
-			subscriber(result!, oldVal);
-		});
+		if (result !== oldValue) {
+			subscribers.forEach((subscriber) => {
+				subscriber(result!, oldValue);
+			});
+		}
 	};
 	computedStack.add(subscribe);
 	result = fn();
@@ -193,18 +196,17 @@ export const computed = <T>(
 			return () => subscribers.delete(newCb);
 		},
 		peek: () => result!,
-		[SYM_STATE]: true,
+		[SYM_REACTIVE_STATE]: true,
 	};
 };
 
-export const isReactive = (value: unknown): value is State =>
-	value?.[SYM_STATE] === true;
+export const isReactiveState = (value: unknown): value is State =>
+	value?.[SYM_REACTIVE_STATE] === true;
 
-const SYM_REACTIVE = Symbol("reactive");
 export const reactive = <T extends Function>(fn: T): T => {
-	fn[SYM_REACTIVE] = true;
+	fn[SYM_REACTIVE_FUNCTION] = true;
 	return fn;
 };
 
 export const isReactiveFunction = (fn: unknown): fn is () => unknown =>
-	fn?.[SYM_REACTIVE] === true;
+	fn?.[SYM_REACTIVE_FUNCTION] === true;

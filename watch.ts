@@ -56,9 +56,9 @@ const formatFile = async (filename: string) => {
 const glob = new Glob("**/*.tsx");
 
 const watch = async () => {
-	// for await (const filename of glob.scan()) {
-	// 	updateFile(filename);
-	// }
+	for await (const filename of glob.scan()) {
+		updateFile(filename);
+	}
 
 	const events = fs.watch(".", { recursive: true });
 

@@ -1,4 +1,4 @@
-import { computed, isReactive, isReactiveFunction } from "./state";
+import { computed, isReactiveFunction, isReactiveState } from "./state";
 
 const SYM_RENDER = Symbol("render");
 /**
@@ -63,81 +63,19 @@ const createNode = (value: any, ele: HTMLElement): Node => {
 			return value;
 		}
 
-		// If the value is a function, render it as a computed value
+		// Replace stringable values with text nodes
+		if (isStringable(value)) {
+			return document.createTextNode(String(value));
+		}
+
+		// If the value is a reactive function, render it as a computed value
 		if (isReactiveFunction(value)) {
 			const reactiveValue = computed(value);
 			let currentNode = createNode(reactiveValue.value, ele);
 
-			const isTextNode = currentNode instanceof Text;
-			const isDocumentFragment = currentNode instanceof DocumentFragment;
-
-			if (isTextNode) {
-				reactiveValue.subscribe((value) => {
-					currentNode.textContent = String(value);
-				});
-			} else if (isDocumentFragment) {
-				let nodes = Array.from(currentNode.childNodes);
-				const commentNode = document.createComment("fragment-start");
-				currentNode.insertBefore(commentNode, currentNode.firstChild);
-				const endCommentNode = document.createComment("fragment-end");
-				currentNode.appendChild(endCommentNode);
-				reactiveValue.subscribe((items) => {
-					// Remove nodes between comments
-					nodes.forEach((node) => node.remove());
-
-					// Replace nodes between comments
-					currentNode = createNode(items, ele);
-					nodes = Array.from(currentNode.childNodes);
-					ele.insertBefore(currentNode, endCommentNode);
-				});
-			} else {
-				// Subscribe to the computed value and replace the current node
-				// with the new value when it changes
-				reactiveValue.subscribe((value) => {
-					try {
-						const newNode = createNode(value, ele);
-						Object.assign(currentNode, { isMemo: true });
-						(<Element>currentNode).replaceWith(newNode);
-						currentNode = newNode;
-					} catch {
-						console.log("Failed to replace computed node:");
-						console.log(currentNode);
-					}
-				});
-			}
-
-			return currentNode;
-		}
-
-		// If the value is a string or number, render it as a text node
-		if (typeof value === "string" || typeof value === "number") {
-			return document.createTextNode(value.toString());
-		}
-
-		// If the value is an object with a value property, render its value
-		if (isReactive(value)) {
-			const reactiveValue = value;
-			let currentNode = createNode(reactiveValue.value, ele);
-			const isTextNode = currentNode instanceof Text;
-
-			if (isTextNode) {
-				reactiveValue.subscribe((value) => {
-					currentNode.textContent = String(value);
-				});
-			} else {
-				// Subscribe to the reactive value and replace the current node
-				// with the new value when it changes
-				reactiveValue.subscribe((newValue: any) => {
-					try {
-						const newNode = createNode(newValue, ele);
-						(<Element>currentNode).replaceWith(newNode);
-						currentNode = newNode;
-					} catch {
-						console.log("Failed to replace reactive node:");
-						console.log(currentNode);
-					}
-				});
-			}
+			reactiveValue.subscribe((value, oldValue) => {
+				currentNode = replaceNodes(oldValue, value, currentNode, ele);
+			});
 
 			return currentNode;
 		}
@@ -145,10 +83,11 @@ const createNode = (value: any, ele: HTMLElement): Node => {
 		// If the value is an array, render each element as a node
 		if (Array.isArray(value)) {
 			const node = fragment;
+			const startCommentNode = document.createComment("list-start");
+			const endCommentNode = document.createComment("list-end");
 			const nodes = value.map((child) => createNode(child, ele));
 
-			node.append(...nodes);
-
+			node.append(startCommentNode, ...nodes, endCommentNode);
 			return node;
 		}
 
@@ -175,31 +114,138 @@ const createNode = (value: any, ele: HTMLElement): Node => {
  * @param {Object|ArrayLike<unknown>} props - The props to set on the element. If an object, the keys are the prop names and the values are the prop values. If an array, the props are assumed to be in the format of [key, value].
  */
 const handleProps = (
-	ele: {
-		addEventListener: (arg0: string, arg1: unknown) => void;
-		setAttribute: (arg0: string, arg1: unknown) => void;
-	},
+	ele: HTMLElement,
 	props: { [s: string]: unknown } | ArrayLike<unknown>,
 ) => {
 	Object.entries(props).forEach(([key, value]) => {
+		if (value === undefined) {
+			ele.setAttribute(key, "");
+			return;
+		}
+
 		if (isReactiveFunction(value)) {
 			value = computed(value);
 		}
 
-		if (isReactive(value)) {
+		if (isReactiveState(value)) {
 			const state = value;
 			value = value.value;
 			state.subscribe((value) => {
-				ele.setAttribute(key, value);
+				if (key === "style" && typeof value === "object") {
+					Object.entries(value).forEach(([key, value]) => {
+						ele.style[key] = value;
+					});
+					return;
+				}
+				ele.setAttribute(key, String(value));
 			});
+		}
+
+		if (key === "style" && typeof value === "object") {
+			Object.entries(value).forEach(([key, value]) => {
+				ele.style[key] = value;
+			});
+			return;
 		}
 
 		if (key.startsWith("on")) {
 			const eventName = key.slice(2).toLowerCase();
 
-			ele.addEventListener(eventName, value);
+			ele.addEventListener(
+				eventName as keyof HTMLElementEventMap,
+				value as EventListener,
+			);
+			return;
 		}
 
-		ele.setAttribute(key, value);
+		ele.setAttribute(key, String(value));
 	});
+};
+
+const isStringable = (value: unknown): value is string | number | Date => {
+	return (
+		typeof value === "string" ||
+		typeof value === "number" ||
+		value instanceof Date
+	);
+};
+
+const replaceNodes = (
+	oldValue: unknown,
+	newValue: unknown,
+	currentNode: Node,
+	parent: Node,
+): Node => {
+	if (oldValue === newValue) {
+		return currentNode;
+	}
+
+	if (
+		oldValue instanceof HTMLElement &&
+		newValue instanceof HTMLElement &&
+		oldValue.outerHTML === newValue.outerHTML
+	) {
+		return currentNode;
+	}
+
+	if (isStringable(oldValue)) {
+		oldValue = currentNode;
+	}
+
+	if (isStringable(newValue)) {
+		newValue = document.createTextNode(String(newValue));
+	}
+
+	// If both are text nodes, replace content
+	if (oldValue instanceof Text && newValue instanceof Text) {
+		// If text content is different, replace
+		if (oldValue.textContent !== newValue.textContent) {
+			oldValue.textContent = newValue.textContent;
+		}
+		return currentNode;
+	}
+
+	// replace old value array with the fragment
+	const alreadyHasComments = Array.isArray(oldValue);
+	if (Array.isArray(oldValue)) {
+		const endMarker = oldValue[oldValue.length - 1].nextSibling;
+		if (endMarker instanceof Comment) {
+			oldValue.forEach((child) => child.remove());
+			const tempNode = document.createComment("temp");
+			endMarker.parentNode?.insertBefore(tempNode, endMarker);
+			oldValue = tempNode;
+		}
+	}
+
+	// If new is an array, wrap it with the document fragment
+	if (Array.isArray(newValue)) {
+		const startMarker = document.createComment("list-start");
+		const endMarker = document.createComment("list-end");
+		const elements = alreadyHasComments
+			? newValue
+			: [startMarker, ...newValue, endMarker];
+		const fragment = document.createDocumentFragment();
+		fragment.append(...elements);
+		newValue = fragment;
+	}
+
+	if (
+		newValue instanceof HTMLElement ||
+		newValue instanceof DocumentFragment ||
+		newValue instanceof Text
+	) {
+		if (oldValue instanceof Node) {
+			parent.replaceChild(newValue, oldValue);
+			return newValue;
+		}
+	}
+
+	console.log("Handle updates for", {
+		currentNode,
+		parent,
+		oldValue,
+		newValue,
+	});
+
+	return currentNode;
 };

@@ -34,10 +34,14 @@ export function TodoList() {
 				{reactive(() => totalCount.value)})
 			</h3>
 			<ul>
+				{reactive(() => Math.random().toFixed(3))}
 				{reactive(() =>
 					todos.value.map((todo) => (
 						<li class={reactive(() => (todo.done ? "done" : ""))}>
-							<span>{reactive(() => todo.text)}</span>
+							<span>
+								{reactive(() => todo.text)}
+								{reactive(() => Math.random().toFixed(3))}
+							</span>
 							<button onClick={() => toggleTodo(todo.id)}>
 								{reactive(() => (todo.done ? "Undo" : "Done"))}
 							</button>
