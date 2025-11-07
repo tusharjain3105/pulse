@@ -156,7 +156,7 @@ export function Counter() {
 	const count = state(0);
 	return /* @__PURE__ */ _jsxDEV("button", {
 		onClick: () => count++,
-		children: () => count.value
+		children: computed(() => count.value)
 	}, void 0, false, {
 		fileName: _jsxFileName,
 		lineNumber: 6,
@@ -174,7 +174,7 @@ test("JSX with conditional rendering", () => {
 
 	const expected = `export function Toggle() {
 	const show = true;
-	return /* @__PURE__ */ _jsxDEV("div", { children: () => show ? "Visible" : "Hidden" }, void 0, false, {
+	return /* @__PURE__ */ _jsxDEV("div", { children: computed(() => show ? "Visible" : "Hidden") }, void 0, false, {
 		fileName: _jsxFileName,
 		lineNumber: 4,
 		columnNumber: 10
@@ -195,7 +195,7 @@ test("JSX with array map", () => {
 		2,
 		3
 	];
-	return /* @__PURE__ */ _jsxDEV("ul", { children: () => items.map((i) => i * 2) }, void 0, false, {
+	return /* @__PURE__ */ _jsxDEV("ul", { children: computed(() => items.map((i) => i * 2)) }, void 0, false, {
 		fileName: _jsxFileName,
 		lineNumber: 4,
 		columnNumber: 10
@@ -229,7 +229,7 @@ test("JSX with object property access", () => {
 
 	const expected = `export function User() {
 	const user = { name: "John" };
-	return /* @__PURE__ */ _jsxDEV("span", { children: () => user.name }, void 0, false, {
+	return /* @__PURE__ */ _jsxDEV("span", { children: computed(() => user.name) }, void 0, false, {
 		fileName: _jsxFileName,
 		lineNumber: 4,
 		columnNumber: 10
@@ -245,7 +245,7 @@ test("JSX with function call in children", () => {
 	const input = `export function Math() { return <div>{Math.random()}</div>; }`;
 
 	const expected = `export function Math() {
-	return /* @__PURE__ */ _jsxDEV("div", { children: () => Math.random() }, void 0, false, {
+	return /* @__PURE__ */ _jsxDEV("div", { children: computed(() => Math.random()) }, void 0, false, {
 		fileName: _jsxFileName,
 		lineNumber: 2,
 		columnNumber: 10
@@ -281,7 +281,7 @@ test("JSX with event handler and state update", () => {
 	const active = state(false);
 	return /* @__PURE__ */ _jsxDEV("button", {
 		onClick: () => active.value = !active.value,
-		children: () => active.value ? "On" : "Off"
+		children: computed(() => active.value ? "On" : "Off")
 	}, void 0, false, {
 		fileName: _jsxFileName,
 		lineNumber: 4,
@@ -512,7 +512,7 @@ test("custom components with state and dynamic children", () => {
 	const todos = state([]);
 	return /* @__PURE__ */ _jsxDEV(TodoList, { children: /* @__PURE__ */ _jsxDEV(TodoItem, {
 		done: false,
-		children: () => todos.value.length
+		children: computed(() => todos.value.length)
 	}, 1, false, {
 		fileName: _jsxFileName,
 		lineNumber: 4,
@@ -543,7 +543,7 @@ export function Counter() {
 	const count = state(0);
 	return /* @__PURE__ */ _jsxDEV("button", {
 		onClick: () => count++,
-		children: () => count.value
+		children: computed(() => count.value)
 	}, void 0, false, {
 		fileName: _jsxFileName,
 		lineNumber: 6,
@@ -564,7 +564,7 @@ test("Direct state usage", () => {
 	placeholder="Name"
 />`;
 
-	const expected = `<input type="text" value={() => count.value} onInput={(e) => count.value = (e.target as HTMLInputElement).value} placeholder="Name" />`;
+	const expected = `<input type="text" value={computed(() => count.value)} onInput={(e) => count.value = (e.target as HTMLInputElement).value} placeholder="Name" />`;
 
-	expect(transformTsx(input, "test.tsx", { debug: true })).toInclude(expected);
+	expect(transformTsx(input, "test.tsx")).toInclude(expected);
 });

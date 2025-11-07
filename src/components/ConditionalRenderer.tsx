@@ -18,40 +18,43 @@ export function ConditionalRenderer() {
 		<div class={`conditional theme-${() => theme.value}`}>
 			<h3>Conditional Rendering</h3>
 
-			{() =>
+			{reactive(() =>
 				isLoggedIn.value ? (
 					<div class="user-panel">
-						<p>Welcome, {() => user.value!.name}!</p>
-						<p>Role: {() => user.value!.role}</p>
+						<p>Welcome, {reactive(() => user.value!.name)}!</p>
+						<p>Role: {reactive(() => user.value!.role)}</p>
 						<button onClick={logout}>Logout</button>
 					</div>
 				) : (
 					<button onClick={login}>Login</button>
-				)
-			}
+				),
+			)}
 
 			<div class="controls">
 				<button onClick={() => (showDetails.value = !showDetails.value)}>
-					{() => (showDetails.value ? "Hide" : "Show")} Details
+					{reactive(() => (showDetails.value ? "Hide" : "Show"))} Details
 				</button>
 				<button
 					onClick={() =>
 						(theme.value = theme.value === "light" ? "dark" : "light")
 					}
 				>
-					Switch to {() => (theme.value === "light" ? "Dark" : "Light")}
+					Switch to{" "}
+					{reactive(() => (theme.value === "light" ? "Dark" : "Light"))}
 				</button>
 			</div>
 
-			{() =>
-				showDetails.value && (
+			{reactive(() =>
+				showDetails.value ? (
 					<div class="details">
 						<h4>Debug Info</h4>
-						<p>Theme: {() => theme.value}</p>
-						<p>Logged in: {() => (isLoggedIn.value ? "Yes" : "No")}</p>
+						<p>Theme: {reactive(() => theme.value)}</p>
+						<p>
+							Logged in: {reactive(() => (isLoggedIn.value ? "Yes" : "No"))}
+						</p>
 					</div>
-				)
-			}
+				) : null,
+			)}
 		</div>
 	);
 }

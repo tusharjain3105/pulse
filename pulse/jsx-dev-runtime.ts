@@ -1,4 +1,4 @@
-import { computed, isReactive } from "./state";
+import { computed, isReactive, isReactiveFunction } from "./state";
 
 const SYM_RENDER = Symbol("render");
 /**
@@ -64,7 +64,7 @@ const createNode = (value: any, ele: HTMLElement): Node => {
 		}
 
 		// If the value is a function, render it as a computed value
-		if (typeof value === "function") {
+		if (isReactiveFunction(value)) {
 			const reactiveValue = computed(value);
 			let currentNode = createNode(reactiveValue.value, ele);
 
@@ -182,6 +182,18 @@ const handleProps = (
 	props: { [s: string]: unknown } | ArrayLike<unknown>,
 ) => {
 	Object.entries(props).forEach(([key, value]) => {
+		if (isReactiveFunction(value)) {
+			value = computed(value);
+		}
+
+		if (isReactive(value)) {
+			const state = value;
+			value = value.value;
+			state.subscribe((value) => {
+				ele.setAttribute(key, value);
+			});
+		}
+
 		if (key.startsWith("on")) {
 			const eventName = key.slice(2).toLowerCase();
 

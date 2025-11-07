@@ -6,3 +6,5 @@ declare namespace JSX {
 
 	interface Element extends HTMLElement {}
 }
+
+declare function reactive<T extends Function>(fn: T): T;

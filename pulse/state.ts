@@ -199,3 +199,12 @@ export const computed = <T>(
 
 export const isReactive = (value: unknown): value is State =>
 	value?.[SYM_STATE] === true;
+
+const SYM_REACTIVE = Symbol("reactive");
+export const reactive = <T extends Function>(fn: T): T => {
+	fn[SYM_REACTIVE] = true;
+	return fn;
+};
+
+export const isReactiveFunction = (fn: unknown): fn is () => unknown =>
+	fn?.[SYM_REACTIVE] === true;

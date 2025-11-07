@@ -1,4 +1,4 @@
-import { state, computed } from "pulse/state";
+import { computed, reactive, state } from "pulse/state";
 
 interface Profile {
 	name: string;
@@ -48,20 +48,22 @@ export function NestedState() {
 		<div class="nested-state">
 			<h3>Nested State Updates</h3>
 			<div class="profile-card">
-				<h4>{() => profile.value.name}</h4>
-				<p>Posts: {() => profile.value.stats.posts}</p>
-				<p>Followers: {() => profile.value.stats.followers}</p>
-				<p>Engagement: {() => engagement.value}%</p>
+				<h4>{reactive(() => profile.value.name)}</h4>
+				<p>Posts: {reactive(() => profile.value.stats.posts)}</p>
+				<p>Followers: {reactive(() => profile.value.stats.followers)}</p>
+				<p>Engagement: {reactive(() => engagement.value)}%</p>
 				<p>
 					Notifications:{" "}
-					{() => (profile.value.settings.notifications ? "On" : "Off")}
+					{reactive(() =>
+						profile.value.settings.notifications ? "On" : "Off",
+					)}
 				</p>
 			</div>
 
 			<div class="controls">
 				<input
 					type="text"
-					value={() => profile.value.name}
+					value={reactive(() => profile.value.name)}
 					onInput={(e) => updateName((e.target as HTMLInputElement).value)}
 					placeholder="Name"
 				/>

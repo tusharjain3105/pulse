@@ -7,8 +7,10 @@ export function Counter() {
 	return (
 		<div class="counter">
 			<h3>Basic State</h3>
-			<div class="value">{() => count.value}</div>
-			<div class="status">Status: {() => (isEven.value ? "Even" : "Odd")}</div>
+			<div class="value">{reactive(() => count.value)}</div>
+			<div class="status">
+				Status: {reactive(() => (isEven.value ? "Even" : "Odd"))}
+			</div>
 			<button onClick={() => count.value++}>+</button>
 			<button onClick={() => count.value--}>-</button>
 		</div>

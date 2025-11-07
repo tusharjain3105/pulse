@@ -1,4 +1,4 @@
-import { state, computed } from "pulse/state";
+import { state, reactive, computed } from "pulse/state";
 
 const metrics = state({ cpu: 45, memory: 62, network: 23 });
 const isActive = state(false);
@@ -56,58 +56,46 @@ export function RealTimeData() {
 		<div class="realtime-data">
 			<h3>Real-time State Updates</h3>
 
-			<div
-				class="status-indicator"
-				style={`color: ${() => status.value.color}`}
-			>
-				Status: {() => status.value.level.toUpperCase()}
+			<div class="status-indicator" style={`color: ${status.value.color}`}>
+				Status: {reactive(() => status.value.level.toUpperCase())}
 			</div>
 
 			<div class="metrics">
 				<div class="metric">
 					<span>CPU</span>
 					<div class="bar">
-						<div
-							class="fill"
-							style={`width: ${() => metrics.value.cpu}%; background: ${() => status.value.color}`}
-						></div>
+						<div class="fill" style={`width: ${metrics.value.cpu}%`}></div>
 					</div>
-					<span>{() => metrics.value.cpu}%</span>
+					<span>{reactive(() => metrics.value.cpu)}%</span>
 				</div>
 
 				<div class="metric">
 					<span>Memory</span>
 					<div class="bar">
-						<div
-							class="fill"
-							style={`width: ${() => metrics.value.memory}%`}
-						></div>
+						<div class="fill" style={`width: ${metrics.value.memory}%`}></div>
 					</div>
-					<span>{() => metrics.value.memory}%</span>
+					<span>{reactive(() => metrics.value.memory)}%</span>
 				</div>
 
 				<div class="metric">
 					<span>Network</span>
 					<div class="bar">
-						<div
-							class="fill"
-							style={`width: ${() => metrics.value.network}%`}
-						></div>
+						<div class="fill" style={`width: ${metrics.value.network}%`}></div>
 					</div>
-					<span>{() => metrics.value.network}%</span>
+					<span>{reactive(() => metrics.value.network)}%</span>
 				</div>
 			</div>
 
-			<p>Average CPU (last 10): {() => avgCpu.value}%</p>
+			<p>Average CPU (last 10): {reactive(() => avgCpu.value)}%</p>
 
 			<div class="controls">
-				{() =>
+				{reactive(() =>
 					isActive.value ? (
 						<button onClick={stopMonitoring}>Stop Monitoring</button>
 					) : (
 						<button onClick={startMonitoring}>Start Monitoring</button>
-					)
-				}
+					),
+				)}
 			</div>
 		</div>
 	);

@@ -1,4 +1,4 @@
-import { state, computed } from "pulse/state";
+import { state, reactive, computed } from "pulse/state";
 
 interface Todo {
 	id: number;
@@ -30,19 +30,20 @@ export function TodoList() {
 	return (
 		<div class="todo-list">
 			<h3>
-				Array State ({() => completedCount.value}/{() => totalCount.value})
+				Array State ({reactive(() => completedCount.value)}/
+				{reactive(() => totalCount.value)})
 			</h3>
 			<ul>
-				{() =>
+				{reactive(() =>
 					todos.value.map((todo) => (
-						<li class={() => (todo.done ? "done" : "")}>
-							<span>{() => todo.text}</span>
+						<li class={reactive(() => (todo.done ? "done" : ""))}>
+							<span>{reactive(() => todo.text)}</span>
 							<button onClick={() => toggleTodo(todo.id)}>
-								{() => (todo.done ? "Undo" : "Done")}
+								{reactive(() => (todo.done ? "Undo" : "Done"))}
 							</button>
 						</li>
-					))
-				}
+					)),
+				)}
 			</ul>
 			<button onClick={addTodo}>Add Todo</button>
 		</div>

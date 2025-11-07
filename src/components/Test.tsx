@@ -6,7 +6,7 @@ const Test = () => {
 	return (
 		<input
 			type="text"
-			value={() => count.value}
+			value={reactive(() => count.value)}
 			onInput={(e) => (count.value = (e.target as HTMLInputElement).value)}
 			placeholder="Name"
 		/>
