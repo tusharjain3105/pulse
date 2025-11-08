@@ -1,22 +1,25 @@
 import { computed, isReactiveFunction, isReactiveState } from "./state";
-
 const SYM_RENDER = Symbol("render");
 /**
  * jsxDEV is a function that renders a JSX element to the DOM.
  * @param {String|Function} element - The JSX element to render.
  * @param {Object} props - The props to pass to the JSX element.
- * @returns {HTMLElement} The rendered element.
+ * @returns {Node} The rendered element.
  */
 export const jsxDEV = (
 	element: (arg0: { [x: string]: any }) => any,
 	{ children, ...props }: any,
-): HTMLElement => {
+): Node => {
 	if (!element) {
 		return children;
 	}
 
 	if (typeof element === "function") {
-		return element(props);
+		const result = element(props);
+		if (result instanceof Node) {
+			return result;
+		}
+		return createNode(result, null);
 	}
 
 	children = Array.isArray(children) ? children : [children];
@@ -50,16 +53,15 @@ const renderElement = (child: any, ele: HTMLElement) => {
 
 /**
  * Creates a DOM node from a given value.
- * @param {any} value - The value to render to a DOM node.
- * @param {HTMLElement} ele - The element to render the node to.
+ * @param {unknown} value - The value to render to a DOM node.
+ * @param {HTMLElement | null} parent - The element to render the node to.
  * @returns {Node} The created DOM node.
  */
-const createNode = (value: any, ele: HTMLElement): Node => {
+const createNode = (value: unknown, parent: HTMLElement | null): Node => {
 	const fragment = document.createDocumentFragment();
-
 	try {
-		// If the value is an element, return it as is
-		if (value instanceof Element) {
+		// If the value is an node, return it as it is
+		if (value instanceof Node) {
 			return value;
 		}
 
@@ -70,13 +72,15 @@ const createNode = (value: any, ele: HTMLElement): Node => {
 
 		// If the value is a reactive function, render it as a computed value
 		if (isReactiveFunction(value)) {
-			const reactiveValue = computed(value);
+			value = computed(value);
+		}
 
-			let currentNode = createNode(reactiveValue.value, ele);
+		if (isReactiveState(value)) {
+			let currentNode = createNode(value.value, parent);
 
-			if (reactiveValue.isReactive) {
-				reactiveValue.subscribe((value, oldValue) => {
-					currentNode = replaceNodes(oldValue, value, currentNode, ele);
+			if (value.isReactive) {
+				value.subscribe((value, oldValue) => {
+					currentNode = replaceNodes(oldValue, value, currentNode, parent);
 				});
 			}
 
@@ -88,7 +92,7 @@ const createNode = (value: any, ele: HTMLElement): Node => {
 			const node = fragment;
 			const startCommentNode = document.createComment("list-start");
 			const endCommentNode = document.createComment("list-end");
-			const nodes = value.map((child) => createNode(child, ele));
+			const nodes = value.map((child) => createNode(child, parent));
 
 			node.append(startCommentNode, ...nodes, endCommentNode);
 			return node;
@@ -105,7 +109,7 @@ const createNode = (value: any, ele: HTMLElement): Node => {
 		return fragment;
 	} catch (e) {
 		// If there is an error rendering the value, log the error and render an empty fragment
-		console.log("Failed to render", value, e.message);
+		console.log("Failed to render", value, (<Error>e).message);
 
 		return fragment;
 	}
@@ -134,9 +138,9 @@ const handleProps = (
 			const state = value;
 			value = value.value;
 			state.subscribe((value) => {
-				if (key === "style" && typeof value === "object") {
+				if (key === "style" && typeof value === "object" && value !== null) {
 					Object.entries(value).forEach(([key, value]) => {
-						ele.style[key] = value;
+						ele.style[key as PulseCSSProperty] = value;
 					});
 					return;
 				}
@@ -144,9 +148,9 @@ const handleProps = (
 			});
 		}
 
-		if (key === "style" && typeof value === "object") {
+		if (key === "style" && typeof value === "object" && value !== null) {
 			Object.entries(value).forEach(([key, value]) => {
-				ele.style[key] = value;
+				ele.style[key as PulseCSSProperty] = value;
 			});
 			return;
 		}
@@ -177,7 +181,7 @@ const replaceNodes = (
 	oldValue: unknown,
 	newValue: unknown,
 	currentNode: Node,
-	parent: Node,
+	parent: Node | null,
 ): Node => {
 	if (oldValue === newValue) {
 		return currentNode;
@@ -238,7 +242,7 @@ const replaceNodes = (
 		newValue instanceof Text
 	) {
 		if (oldValue instanceof Node) {
-			parent.replaceChild(newValue, oldValue);
+			parent?.replaceChild(newValue, oldValue);
 			return newValue;
 		}
 	}

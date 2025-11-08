@@ -1,5 +1,5 @@
 import { reactive } from "./state";
-
+export * from "./state";
 Object.assign(globalThis, { reactive });
 
 export const render = (element: JSX.Element | (() => JSX.Element)) => {
@@ -8,6 +8,10 @@ export const render = (element: JSX.Element | (() => JSX.Element)) => {
 	) as JSX.Element;
 
 	if (typeof window === "object") {
-		document.body.append(resolvedElement);
+		const node =
+			resolvedElement instanceof Node
+				? resolvedElement
+				: document.createTextNode(String(resolvedElement));
+		document.body.append(node);
 	}
 };

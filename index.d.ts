@@ -4,7 +4,20 @@ declare namespace JSX {
 		// etc.
 	}
 
-	interface Element extends HTMLElement {}
+	type Element =
+		| HTMLElement
+		| DocumentFragment
+		| number
+		| string
+		| null
+		| undefined
+		| Date
+		| State;
 }
+
+declare type PulseCSSProperty = Exclude<
+	keyof CSSStyleDeclaration,
+	"length" | "parentRule"
+>;
 
 declare function reactive<T extends Function>(fn: T): T;
