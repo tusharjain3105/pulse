@@ -88,6 +88,7 @@ interface State<T = unknown> {
 		opts?: { key?: string },
 	): VoidFunction;
 	[SYM_REACTIVE_STATE]: true;
+	subscriptions: number;
 }
 
 type StateSubscriber<T = unknown> = Parameters<State<T>["subscribe"]>[0];
@@ -145,19 +146,22 @@ export const state = <T = unknown>(initialValue: T): State<T> => {
 			return () => subscribers.delete(newCb);
 		},
 		[SYM_REACTIVE_STATE]: true,
+		subscriptions: subscribers.size,
 	};
 };
 
 // Computed
 const computedStack = new Set<StateSubscriber>();
 const updateSubscribers = <T>(subscribers: Set<StateSubscriber<T>>) =>
-	computedStack.forEach((recompute) => {
-		subscribers.add(recompute);
+	computedStack.forEach((subscribe) => {
+		// @ts-expect-error subscriptions is not part
+		subscribe.subscriptions = subscribe.subscriptions + 1;
+		subscribers.add(subscribe);
 	});
 
 export const computed = <T>(
 	fn: () => T,
-): Omit<State<T>, "value"> & { readonly value: T } => {
+): Omit<State<T>, "value"> & { readonly value: T; isReactive: boolean } => {
 	const computedSubscriptionMap = new Map<string, StateSubscriber>();
 	const subscribers = new Set<StateSubscriber<T>>();
 	let result: T | undefined;
@@ -172,8 +176,12 @@ export const computed = <T>(
 			});
 		}
 	};
+
+	subscribe.subscriptions = 0;
+
 	computedStack.add(subscribe);
 	result = fn();
+	const isReactive = subscribe.subscriptions > 0;
 	computedStack.delete(subscribe);
 
 	return {
@@ -197,6 +205,8 @@ export const computed = <T>(
 		},
 		peek: () => result!,
 		[SYM_REACTIVE_STATE]: true,
+		subscriptions: subscribers.size,
+		isReactive,
 	};
 };
 

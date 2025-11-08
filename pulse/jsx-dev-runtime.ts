@@ -71,11 +71,14 @@ const createNode = (value: any, ele: HTMLElement): Node => {
 		// If the value is a reactive function, render it as a computed value
 		if (isReactiveFunction(value)) {
 			const reactiveValue = computed(value);
+
 			let currentNode = createNode(reactiveValue.value, ele);
 
-			reactiveValue.subscribe((value, oldValue) => {
-				currentNode = replaceNodes(oldValue, value, currentNode, ele);
-			});
+			if (reactiveValue.isReactive) {
+				reactiveValue.subscribe((value, oldValue) => {
+					currentNode = replaceNodes(oldValue, value, currentNode, ele);
+				});
+			}
 
 			return currentNode;
 		}
