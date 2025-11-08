@@ -1,16 +1,23 @@
 import { render, state } from "pulse";
 
 const App = () => {
-	const user = state({ name: "John", age: 30 });
+	const value = state(0);
 
 	return (
 		<div>
-			<p>{reactive(() => user.value.name + Math.random().toFixed(2))}</p>
-			<p>{reactive(() => user.value.age + Math.random().toFixed(2))}</p>
-			<button onClick={() => (user.value.name = "Jane")}>Change Name</button>
-			<button onClick={() => (user.value.age = 31)}>Change Age</button>
+			<Button class="btn" onClick={() => value.value--}>
+				Decrement
+			</Button>
+			<Button class="btn" onClick={() => value.value++}>
+				Increment
+			</Button>
+			<p>{reactive(() => value.value)}</p>
 		</div>
 	);
+};
+
+const Button = (props: any) => {
+	return <button {...props} />;
 };
 
 render(<App />);

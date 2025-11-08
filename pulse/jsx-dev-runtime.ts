@@ -8,8 +8,9 @@ const SYM_RENDER = Symbol("render");
  */
 export const jsxDEV = (
 	element: (arg0: { [x: string]: any }) => any,
-	{ children, ...props }: any,
+	props: any,
 ): Node => {
+	let { children } = props;
 	if (!element) {
 		return children;
 	}
